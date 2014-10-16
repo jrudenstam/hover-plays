@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Hover plays</title>
+	<style  type="text/css" media="screen">
+		body {
+			background: #eee;
+		}
+
+		.vid-wrapper {
+			background: #f5f5f5;
+		}
+
+		.wrapper {
+			margin: 0 auto;
+			width: 800px;
+			display: block;
+		}
+	</style>
+</head>
+<body>
+	<h1 class="wrapper">Hover plays</h1>
+	<div class="vid-wrapper">
+		<video class="wrapper" id="vid" src="vid.mp4"></video>
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		(function(){
+			var h = {
+				registerEventHandler: (function(){
+					if ( document.addEventListener ) {
+						return function( node, type, callback ){
+							node.addEventListener(type, callback, false );
+						};
+					} else if ( document.attachEvent ){
+						return function( node, type, callback ) {
+							node.attachEvent( 'on' + type, callback );
+						};
+					}
+				})(),
+
+				unregisterEventHandler: (function(){
+					if ( document.addEventListener ) {
+						return function( node, type, callback ){
+							node.removeEventListener(type, callback, false );
+						};
+					} else if ( document.attachEvent ){
+						return function( node, type, callback ) {
+							node.detachEvent( 'on' + type, callback );
+						};
+					}
+				})(),
+
+				addEvent: function(node, type, callback, sender) {
+					var wrapCallback = (function( helper ){
+						return function( event ){
+							callback.apply(this, [helper.normaliseEvent(event || window.event), sender]);
+						}
+					})(this);
+
+					this.registerEventHandler(node, type, wrapCallback);
+
+					// Return object to make event handler easy to detach
+					return {
+						node: node,
+						type: type,
+						callback: wrapCallback
+					};
+				},
+
+				removeEvent: function( object ) {
+					this.unregisterEventHandler( object.node, object.type, object.callback );
+				},
+
+				normaliseEvent: function( event ) {
+					if (!event.stopPropagation) {
+						event.stopPropagation = function() {this.cancelBubble = true;};
+						event.preventDefault = function() {this.returnValue = false;};
+					}
+
+					if (!event.stop) {
+						event.stop = function() {
+							this.stopPropagation();
+							this.preventDefault();
+						};
+					}
+
+					if (event.srcElement && !event.target) {
+						event.target = event.srcElement;
+					}
+
+					return event;
+				}
+			};
+
+			var app = {
+				video: document.getElementById('vid'),
+				
+				init: function() {
+					this.bindUiEvents();
+				},
+
+				bindUiEvents: function() {
+					h.addEvent( this.video, 'mousemove', this.setFrame, this );
+				},
+
+				setFrame: function( event, sender ) {
+					var progress = event.layerX/this.clientWidth;
+					this.currentTime = progress*this.duration;
+				}
+			};
+
+			app.init();
+		})();
+	</script>
+</body>
+</html>
